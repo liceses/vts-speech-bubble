@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>喵娘对话气泡</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bubble-width: 400px;
+    --bubble-height: 120px;
+    --font-size: 18px;
+  }
+
+  body {
+    background: transparent;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding-bottom: 40px;
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  }
+
+  #bubbleArea {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    max-height: 100vh;
+    padding-bottom: 20px;
+  }
+
+  .bubble-wrapper {
+    position: relative;
+    width: var(--bubble-width);
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+  }
+
+  .bubble-wrapper.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .cat-ear-left,
+  .cat-ear-right {
+    position: absolute;
+    top: -18px;
+    width: 36px;
+    height: 30px;
+    background: linear-gradient(135deg, #ffb6c1, #ff69b4);
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    z-index: 1;
+  }
+
+  .cat-ear-left { left: 30px; transform: rotate(-10deg); }
+  .cat-ear-right { right: 30px; transform: rotate(10deg); }
+
+  .cat-ear-left::after,
+  .cat-ear-right::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 18px;
+    height: 16px;
+    background: #ffe4e9;
+    clip-path: polygon(50% 20%, 10% 100%, 90% 100%);
+  }
+
+  .bubble {
+    position: relative;
+    background: linear-gradient(135deg, #fff0f5, #ffe4ec, #ffd6e0);
+    border: 2.5px solid #ffb6c1;
+    border-radius: 24px;
+    padding: 18px 24px;
+    min-height: 60px;
+    box-shadow:
+      0 4px 20px rgba(255, 105, 180, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .bubble-wrapper.has-ears .bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -12px;
+    left: 40px;
+    width: 0;
+    height: 0;
+    border-left: 12px solid transparent;
+    border-right: 12px solid transparent;
+    border-top: 14px solid #ffe4ec;
+    filter: drop-shadow(0 2px 2px rgba(255, 105, 180, 0.15));
+  }
+
+  .bubble-text {
+    font-size: var(--font-size);
+    color: #d63384;
+    line-height: 1.6;
+    word-wrap: break-word;
+    min-height: 1.6em;
+  }
+
+  .bubble-text .cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    background: #ff69b4;
+    margin-left: 2px;
+    vertical-align: text-bottom;
+    animation: blink 0.6s infinite;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  .sparkle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: radial-gradient(circle, #ffb6c1 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparkle-float 2s ease-in-out infinite;
+  }
+
+  .sparkle:nth-child(1) { top: -5px; right: 60px; animation-delay: 0s; }
+  .sparkle:nth-child(2) { top: 10px; right: -5px; animation-delay: 0.7s; }
+  .sparkle:nth-child(3) { bottom: 5px; right: 40px; animation-delay: 1.3s; }
+
+  @keyframes sparkle-float {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+
+  .paw-print {
+    position: absolute;
+    bottom: -20px;
+    right: 20px;
+    font-size: 14px;
+    opacity: 0.4;
+  }
+
+  .stack-item {
+    position: relative;
+    width: var(--bubble-width);
+    pointer-events: none;
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+
+  .stack-item.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .stack-item .bubble {
+    position: relative;
+    background: linear-gradient(135deg, #fff0f5, #ffe4ec, #ffd6e0);
+    border: 2.5px solid #ffb6c1;
+    border-radius: 24px;
+    padding: 14px 20px;
+    box-shadow:
+      0 4px 20px rgba(255, 105, 180, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+
+  .stack-item .bubble-text {
+    font-size: var(--font-size);
+    color: #d63384;
+    line-height: 1.6;
+    word-wrap: break-word;
+  }
+
+  .stack-item .sparkle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, #ffb6c1 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+    animation: sparkle-float 2s ease-in-out infinite;
+  }
+
+  .stack-item .sparkle:nth-child(1) { top: -4px; right: 50px; animation-delay: 0s; }
+  .stack-item .sparkle:nth-child(2) { top: 8px; right: -4px; animation-delay: 0.7s; }
+</style>
+</head>
+<body>
+
+<div id="bubbleArea">
+  <div class="bubble-wrapper has-ears" id="bubbleWrapper">
+    <div class="cat-ear-left"></div>
+    <div class="cat-ear-right"></div>
+    <div class="bubble">
+      <div class="sparkle"></div>
+      <div class="sparkle"></div>
+      <div class="sparkle"></div>
+      <div class="bubble-text" id="bubbleText"></div>
+    </div>
+    <div class="paw-print">🐾</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const bubbleArea = document.getElementById('bubbleArea');
+  const bubbleWrapper = document.getElementById('bubbleWrapper');
+  const bubbleText = document.getElementById('bubbleText');
+
+  const params = new URLSearchParams(location.search);
+  const WS_PORT = params.get('port') || '8765';
+  const BUBBLE_WIDTH = params.get('width') || '400';
+  const FONT_SIZE = params.get('fontSize') || '18';
+  let quirkText = params.get('quirk') || '喵~';
+  let quirkEnabled = params.get('quirkEnabled') !== '0';
+
+  document.documentElement.style.setProperty('--bubble-width', BUBBLE_WIDTH + 'px');
+  document.documentElement.style.setProperty('--font-size', FONT_SIZE + 'px');
+
+  let hideTimer = null;
+  let typeTimer = null;
+  let currentText = '';
+  let stayMode = 'auto';
+  let typeSpeed = 60;
+  let hideDelay = 8000;
+  const MAX_STACK = 5;
+
+  function applyQuirk(text) {
+    if (!quirkEnabled || !quirkText) return text;
+    return text.replace(/[。！？~～\s]+$/, '') + quirkText;
+  }
+
+  function typeText(text, targetEl, speed) {
+    if (typeTimer) clearInterval(typeTimer);
+    targetEl.innerHTML = '';
+    const textToType = (targetEl === bubbleText) ? applyQuirk(text) : text;
+    let i = 0;
+    const cursor = document.createElement('span');
+    cursor.className = 'cursor';
+
+    typeTimer = setInterval(() => {
+      if (i < textToType.length) {
+        targetEl.textContent = textToType.substring(0, i + 1);
+        targetEl.appendChild(cursor);
+        i++;
+      } else {
+        clearInterval(typeTimer);
+        typeTimer = null;
+        setTimeout(() => { if (cursor.parentNode) cursor.remove(); }, 1500);
+      }
+    }, speed || typeSpeed);
+  }
+
+  function showBubble(text) {
+    if (stayMode === 'stack') {
+      showStackItem(text);
+      return;
+    }
+
+    if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    bubbleWrapper.classList.add('visible');
+    typeText(text, bubbleText, typeSpeed);
+
+    if (stayMode === 'auto') {
+      hideTimer = setTimeout(() => {
+        bubbleWrapper.classList.remove('visible');
+      }, hideDelay);
+    }
+  }
+
+  function showStackItem(text) {
+    const item = document.createElement('div');
+    item.className = 'stack-item';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    const sparkle1 = document.createElement('div');
+    sparkle1.className = 'sparkle';
+    const sparkle2 = document.createElement('div');
+    sparkle2.className = 'sparkle';
+    const textEl = document.createElement('div');
+    textEl.className = 'bubble-text';
+    bubble.appendChild(sparkle1);
+    bubble.appendChild(sparkle2);
+    bubble.appendChild(textEl);
+    item.appendChild(bubble);
+    bubbleArea.appendChild(item);
+
+    requestAnimationFrame(() => {
+      item.classList.add('visible');
+    });
+
+    typeText(text, textEl, typeSpeed);
+
+    const stackItems = bubbleArea.querySelectorAll('.stack-item');
+    if (stackItems.length > MAX_STACK) {
+      const oldest = stackItems[0];
+      oldest.classList.remove('visible');
+      setTimeout(() => oldest.remove(), 400);
+    }
+
+    if (stayMode === 'auto') {
+      setTimeout(() => {
+        item.classList.remove('visible');
+        setTimeout(() => item.remove(), 400);
+      }, hideDelay);
+    }
+  }
+
+  function clearAll() {
+    bubbleWrapper.classList.remove('visible');
+    if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+    bubbleArea.querySelectorAll('.stack-item').forEach(item => {
+      item.classList.remove('visible');
+      setTimeout(() => item.remove(), 400);
+    });
+  }
+
+  function connect() {
+    const ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+
+    ws.onopen = () => {
+      console.log('已连接到中继服务器');
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'text' && msg.content) {
+          showBubble(msg.content);
+        } else if (msg.type === 'quirk') {
+          if (msg.text !== undefined) quirkText = msg.text;
+          if (msg.enabled !== undefined) quirkEnabled = msg.enabled;
+        } else if (msg.type === 'size' && msg.width) {
+          document.documentElement.style.setProperty('--bubble-width', msg.width + 'px');
+        } else if (msg.type === 'clear') {
+          clearAll();
+        } else if (msg.type === 'stayMode' && msg.mode) {
+          stayMode = msg.mode;
+          if (stayMode !== 'stack') {
+            bubbleArea.querySelectorAll('.stack-item').forEach(item => {
+              item.classList.remove('visible');
+              setTimeout(() => item.remove(), 400);
+            });
+          }
+          if (stayMode === 'hold') {
+            if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+          }
+        } else if (msg.type === 'fontSize' && msg.size) {
+          document.documentElement.style.setProperty('--font-size', msg.size + 'px');
+        } else if (msg.type === 'typeSpeed' && msg.speed) {
+          typeSpeed = msg.speed;
+        } else if (msg.type === 'hideDelay' && msg.delay) {
+          hideDelay = msg.delay;
+        }
+      } catch (e) {}
+    };
+
+    ws.onclose = () => {
+      console.log('连接断开，3秒后重连...');
+      setTimeout(connect, 3000);
+    };
+
+    ws.onerror = () => { ws.close(); };
+  }
+
+  connect();
+})();
+</script>
+</body>
+</html>

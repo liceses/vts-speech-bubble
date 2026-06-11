@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>喵娘对话控制台</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #fff0f5, #ffe4ec);
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .panel {
+    background: white;
+    border-radius: 24px;
+    border: 2px solid #ffb6c1;
+    box-shadow: 0 8px 32px rgba(255, 105, 180, 0.15);
+    padding: 32px;
+    width: 100%;
+    max-width: 500px;
+    margin: auto 0;
+  }
+
+  .panel-title {
+    text-align: center;
+    font-size: 22px;
+    color: #d63384;
+    margin-bottom: 24px;
+    font-weight: bold;
+  }
+
+  .panel-title::before { content: '🐾 '; }
+  .panel-title::after { content: ' 🐾'; }
+
+  .section {
+    margin-bottom: 20px;
+  }
+
+  .section-label {
+    font-size: 14px;
+    color: #e754a0;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  .input-row {
+    display: flex;
+    gap: 10px;
+  }
+
+  .text-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 2px solid #ffc0d0;
+    border-radius: 16px;
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.2s;
+    font-family: inherit;
+  }
+
+  .text-input:focus {
+    border-color: #ff69b4;
+  }
+
+  .send-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #ff69b4, #ff1493);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.1s, box-shadow 0.2s;
+    white-space: nowrap;
+  }
+
+  .send-btn:hover {
+    transform: scale(1.03);
+    box-shadow: 0 4px 12px rgba(255, 20, 147, 0.3);
+  }
+
+  .send-btn:active {
+    transform: scale(0.97);
+  }
+
+  .clear-btn {
+    padding: 12px 20px;
+    background: linear-gradient(135deg, #ffb6c1, #ff8fab);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: transform 0.1s;
+  }
+
+  .clear-btn:hover {
+    transform: scale(1.03);
+  }
+
+  .quirk-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .quirk-input {
+    flex: 1;
+    padding: 10px 14px;
+    border: 2px solid #ffc0d0;
+    border-radius: 14px;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .quirk-input:focus {
+    border-color: #ff69b4;
+  }
+
+  .toggle-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .toggle-label {
+    font-size: 14px;
+    color: #d63384;
+  }
+
+  .toggle {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    cursor: pointer;
+  }
+
+  .toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #ffc0d0;
+    border-radius: 26px;
+    transition: background 0.3s;
+  }
+
+  .toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.3s;
+  }
+
+  .toggle input:checked + .toggle-slider {
+    background: #ff69b4;
+  }
+
+  .toggle input:checked + .toggle-slider::before {
+    transform: translateX(22px);
+  }
+
+  .status {
+    text-align: center;
+    font-size: 13px;
+    padding: 8px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .status.connected {
+    background: #e8fbe8;
+    color: #2e7d32;
+  }
+
+  .status.disconnected {
+    background: #ffeaea;
+    color: #c62828;
+  }
+
+  .quick-phrases {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .quick-btn {
+    padding: 8px 14px;
+    background: #fff0f5;
+    border: 1.5px solid #ffc0d0;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #d63384;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .quick-btn:hover {
+    background: #ffe4ec;
+    border-color: #ff69b4;
+  }
+
+  .size-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .size-slider {
+    flex: 1;
+    accent-color: #ff69b4;
+  }
+
+  .size-value {
+    font-size: 14px;
+    color: #d63384;
+    min-width: 45px;
+    text-align: right;
+  }
+
+  .stay-mode-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .stay-mode-btn {
+    padding: 8px 16px;
+    border: 2px solid #ffc0d0;
+    border-radius: 14px;
+    background: white;
+    font-size: 14px;
+    color: #d63384;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .stay-mode-btn.active {
+    background: linear-gradient(135deg, #ff69b4, #ff1493);
+    color: white;
+    border-color: #ff1493;
+  }
+
+  .stay-mode-btn:hover:not(.active) {
+    background: #fff0f5;
+    border-color: #ff69b4;
+  }
+
+  .stay-mode-desc {
+    font-size: 12px;
+    color: #999;
+    margin-top: 6px;
+  }
+
+  .slider-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .slider-label {
+    font-size: 13px;
+    color: #d63384;
+    min-width: 60px;
+    white-space: nowrap;
+  }
+
+  .history-section {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1.5px solid #ffc0d0;
+    border-radius: 14px;
+    padding: 8px;
+  }
+
+  .history-section::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .history-section::-webkit-scrollbar-track {
+    background: #fff0f5;
+    border-radius: 3px;
+  }
+
+  .history-section::-webkit-scrollbar-thumb {
+    background: #ffb6c1;
+    border-radius: 3px;
+  }
+
+  .history-item {
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #555;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .history-item:hover {
+    background: #fff0f5;
+  }
+
+  .history-text {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .history-time {
+    font-size: 11px;
+    color: #bbb;
+    white-space: nowrap;
+  }
+
+  .history-empty {
+    text-align: center;
+    color: #ccc;
+    font-size: 13px;
+    padding: 16px;
+  }
+
+  .history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .history-clear-btn {
+    font-size: 12px;
+    color: #e754a0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 2px 8px;
+    border-radius: 8px;
+    transition: background 0.15s;
+  }
+
+  .history-clear-btn:hover {
+    background: #fff0f5;
+  }
+</style>
+</head>
+<body>
+
+<div class="panel">
+  <div class="panel-title">喵娘对话控制台</div>
+
+  <div id="status" class="status disconnected">未连接服务器</div>
+
+  <div class="section">
+    <div class="section-label">发送对话</div>
+    <div class="input-row">
+      <input type="text" class="text-input" id="textInput" placeholder="输入要说的话..." maxlength="200">
+      <button class="send-btn" id="sendBtn">发送</button>
+      <button class="clear-btn" id="clearBtn">清空</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">口癖设置</div>
+    <div class="quirk-row">
+      <input type="text" class="quirk-input" id="quirkInput" placeholder="口癖文字，如：喵~" value="喵~">
+      <div class="toggle-wrap">
+        <span class="toggle-label">开启</span>
+        <label class="toggle">
+          <input type="checkbox" id="quirkToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">气泡驻留模式</div>
+    <div class="stay-mode-group">
+      <button class="stay-mode-btn active" data-mode="auto">自动消失</button>
+      <button class="stay-mode-btn" data-mode="hold">保持显示</button>
+      <button class="stay-mode-btn" data-mode="stack">消息堆叠</button>
+    </div>
+    <div class="stay-mode-desc" id="stayModeDesc">气泡显示后自动淡出消失</div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">气泡宽度</div>
+    <div class="size-row">
+      <input type="range" class="size-slider" id="sizeSlider" min="250" max="700" value="400">
+      <span class="size-value" id="sizeValue">400px</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">自定义选项</div>
+    <div class="slider-row">
+      <span class="slider-label">字体大小</span>
+      <input type="range" class="size-slider" id="fontSizeSlider" min="12" max="32" value="18">
+      <span class="size-value" id="fontSizeValue">18px</span>
+    </div>
+    <div class="slider-row">
+      <span class="slider-label">打字速度</span>
+      <input type="range" class="size-slider" id="typeSpeedSlider" min="20" max="150" value="60">
+      <span class="size-value" id="typeSpeedValue">60ms</span>
+    </div>
+    <div class="slider-row" id="autoHideRow">
+      <span class="slider-label">消失时间</span>
+      <input type="range" class="size-slider" id="hideDelaySlider" min="2" max="30" value="8">
+      <span class="size-value" id="hideDelayValue">8秒</span>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-label">快捷短语</div>
+    <div class="quick-phrases" id="quickPhrases">
+      <button class="quick-btn" data-text="大家好呀~">大家好呀~</button>
+      <button class="quick-btn" data-text="谢谢关注！">谢谢关注！</button>
+      <button class="quick-btn" data-text="今天也要开心哦">今天也要开心哦</button>
+      <button class="quick-btn" data-text="拜拜~下次见">拜拜~下次见</button>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="history-header">
+      <div class="section-label" style="margin-bottom:0">消息历史</div>
+      <button class="history-clear-btn" id="historyClearBtn">清空历史</button>
+    </div>
+    <div class="history-section" id="historySection">
+      <div class="history-empty">暂无消息记录</div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const textInput = document.getElementById('textInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  const quirkInput = document.getElementById('quirkInput');
+  const quirkToggle = document.getElementById('quirkToggle');
+  const sizeSlider = document.getElementById('sizeSlider');
+  const sizeValue = document.getElementById('sizeValue');
+  const statusEl = document.getElementById('status');
+  const quickPhrases = document.getElementById('quickPhrases');
+  const fontSizeSlider = document.getElementById('fontSizeSlider');
+  const fontSizeValue = document.getElementById('fontSizeValue');
+  const typeSpeedSlider = document.getElementById('typeSpeedSlider');
+  const typeSpeedValue = document.getElementById('typeSpeedValue');
+  const hideDelaySlider = document.getElementById('hideDelaySlider');
+  const hideDelayValue = document.getElementById('hideDelayValue');
+  const autoHideRow = document.getElementById('autoHideRow');
+  const stayModeDesc = document.getElementById('stayModeDesc');
+  const historySection = document.getElementById('historySection');
+  const historyClearBtn = document.getElementById('historyClearBtn');
+
+  const params = new URLSearchParams(location.search);
+  const WS_PORT = params.get('port') || '8765';
+
+  let ws = null;
+  let stayMode = 'auto';
+  const HISTORY_KEY = 'vts-speech-bubble-history';
+  const MAX_HISTORY = 50;
+
+  const modeDescriptions = {
+    auto: '气泡显示后自动淡出消失',
+    hold: '气泡持续显示，直到下一条消息到来',
+    stack: '多条消息堆叠显示，各自独立消失'
+  };
+
+  function updateStatus(connected) {
+    if (connected) {
+      statusEl.textContent = '已连接服务器 ✓';
+      statusEl.className = 'status connected';
+    } else {
+      statusEl.textContent = '未连接服务器';
+      statusEl.className = 'status disconnected';
+    }
+  }
+
+  function send(msg) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify(msg));
+    }
+  }
+
+  function sendText() {
+    const text = textInput.value.trim();
+    if (!text) return;
+    send({ type: 'text', content: text });
+    addHistory(text);
+    textInput.value = '';
+    textInput.focus();
+  }
+
+  function sendQuirkConfig() {
+    send({
+      type: 'quirk',
+      text: quirkInput.value,
+      enabled: quirkToggle.checked
+    });
+  }
+
+  function sendStayMode() {
+    send({ type: 'stayMode', mode: stayMode });
+  }
+
+  function sendFontSize() {
+    send({ type: 'fontSize', size: parseInt(fontSizeSlider.value) });
+  }
+
+  function sendTypeSpeed() {
+    send({ type: 'typeSpeed', speed: parseInt(typeSpeedSlider.value) });
+  }
+
+  function sendHideDelay() {
+    send({ type: 'hideDelay', delay: parseInt(hideDelaySlider.value) * 1000 });
+  }
+
+  function setStayMode(mode) {
+    stayMode = mode;
+    document.querySelectorAll('.stay-mode-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.mode === mode);
+    });
+    stayModeDesc.textContent = modeDescriptions[mode];
+    autoHideRow.style.display = mode === 'stack' ? 'none' : '';
+    sendStayMode();
+  }
+
+  function loadHistory() {
+    try {
+      return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+    } catch { return []; }
+  }
+
+  function saveHistory(history) {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  }
+
+  function addHistory(text) {
+    const history = loadHistory();
+    history.unshift({ text, time: Date.now() });
+    if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
+    saveHistory(history);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const history = loadHistory();
+    if (history.length === 0) {
+      historySection.innerHTML = '<div class="history-empty">暂无消息记录</div>';
+      return;
+    }
+    historySection.innerHTML = history.map((item, i) => {
+      const d = new Date(item.time);
+      const time = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+      return `<div class="history-item" data-index="${i}"><span class="history-text">${escapeHtml(item.text)}</span><span class="history-time">${time}</span></div>`;
+    }).join('');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function connect() {
+    ws = new WebSocket(`ws://localhost:${WS_PORT}`);
+
+    ws.onopen = () => {
+      updateStatus(true);
+      sendQuirkConfig();
+      sendStayMode();
+      sendFontSize();
+      sendTypeSpeed();
+      sendHideDelay();
+    };
+
+    ws.onclose = () => {
+      updateStatus(false);
+      setTimeout(connect, 3000);
+    };
+
+    ws.onerror = () => { ws.close(); };
+  }
+
+  sendBtn.addEventListener('click', sendText);
+
+  textInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendText();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    send({ type: 'clear' });
+  });
+
+  quirkInput.addEventListener('input', sendQuirkConfig);
+  quirkToggle.addEventListener('change', sendQuirkConfig);
+
+  sizeSlider.addEventListener('input', () => {
+    sizeValue.textContent = sizeSlider.value + 'px';
+    send({ type: 'size', width: parseInt(sizeSlider.value) });
+  });
+
+  fontSizeSlider.addEventListener('input', () => {
+    fontSizeValue.textContent = fontSizeSlider.value + 'px';
+    sendFontSize();
+  });
+
+  typeSpeedSlider.addEventListener('input', () => {
+    typeSpeedValue.textContent = typeSpeedSlider.value + 'ms';
+    sendTypeSpeed();
+  });
+
+  hideDelaySlider.addEventListener('input', () => {
+    hideDelayValue.textContent = hideDelaySlider.value + '秒';
+    sendHideDelay();
+  });
+
+  document.querySelectorAll('.stay-mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => setStayMode(btn.dataset.mode));
+  });
+
+  quickPhrases.addEventListener('click', (e) => {
+    const btn = e.target.closest('.quick-btn');
+    if (!btn) return;
+    textInput.value = btn.dataset.text;
+    sendText();
+  });
+
+  historySection.addEventListener('click', (e) => {
+    const item = e.target.closest('.history-item');
+    if (!item) return;
+    const history = loadHistory();
+    const idx = parseInt(item.dataset.index);
+    if (history[idx]) {
+      textInput.value = history[idx].text;
+      sendText();
+    }
+  });
+
+  historyClearBtn.addEventListener('click', () => {
+    saveHistory([]);
+    renderHistory();
+  });
+
+  renderHistory();
+  connect();
+})();
+</script>
+</body>
+</html>
