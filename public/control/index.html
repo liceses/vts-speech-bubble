@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>喵娘对话控制台</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="loginPage" class="login-page">
+  <div class="login-panel">
+    <div class="panel-title">喵娘对话控制台</div>
+    <div class="login-label">请输入访问码</div>
+    <input type="text" class="login-input" id="codeInput" maxlength="4" placeholder="4位数字" inputmode="numeric">
+    <button class="login-btn" id="codeSubmit">进入</button>
+    <div class="login-error" id="codeError"></div>
+  </div>
+</div>
+
+<div id="mainPage" class="main-page" style="display:none">
+  <div class="panel">
+    <div class="panel-title">喵娘对话控制台</div>
+    <div id="status" class="status disconnected">未连接服务器</div>
+
+    <div class="section">
+      <div class="section-label">发送对话</div>
+      <div class="input-row">
+        <input type="text" class="text-input" id="textInput" placeholder="输入要说的话..." maxlength="200">
+        <button class="send-btn" id="sendBtn">发送</button>
+        <button class="clear-btn" id="clearBtn">清空</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">快捷短语</div>
+      <div class="quick-phrases" id="quickPhrases">
+        <button class="quick-btn" data-text="大家好呀~">大家好呀~</button>
+        <button class="quick-btn" data-text="谢谢关注！">谢谢关注！</button>
+        <button class="quick-btn" data-text="今天也要开心哦">今天也要开心哦</button>
+        <button class="quick-btn" data-text="拜拜~下次见">拜拜~下次见</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">驻留模式</div>
+      <div class="btn-group">
+        <button class="mode-btn active" data-mode="auto">自动消失</button>
+        <button class="mode-btn" data-mode="hold">保持显示</button>
+        <button class="mode-btn" data-mode="stack">消息堆叠</button>
+      </div>
+      <div class="slider-row" id="hideDelayRow">
+        <span class="slider-label">消失时间</span>
+        <input type="range" class="slider" id="hideDelaySlider" min="2" max="30" value="8">
+        <span class="slider-value" id="hideDelayValue">8秒</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">气泡样式</div>
+      <div class="slider-row">
+        <span class="slider-label">宽度</span>
+        <input type="range" class="slider" id="bubbleWidthSlider" min="200" max="700" value="400">
+        <span class="slider-value" id="bubbleWidthValue">400px</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">字号</span>
+        <input type="range" class="slider" id="fontSizeSlider" min="12" max="36" value="18">
+        <span class="slider-value" id="fontSizeValue">18px</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">打字速度</span>
+        <input type="range" class="slider" id="typeSpeedSlider" min="20" max="200" value="60">
+        <span class="slider-value" id="typeSpeedValue">60ms</span>
+      </div>
+      <div class="select-row">
+        <span class="slider-label">字体</span>
+        <select class="select-input" id="fontFamilySelect">
+          <option value="Microsoft YaHei">微软雅黑</option>
+          <option value="PingFang SC">苹方</option>
+          <option value="SimHei">黑体</option>
+          <option value="KaiTi">楷体</option>
+          <option value="FangSong">仿宋</option>
+          <option value="cursive">手写体</option>
+        </select>
+      </div>
+      <div class="check-row">
+        <label class="checkbox-wrap">
+          <input type="checkbox" id="fontBoldCheck">
+          <span>加粗</span>
+        </label>
+        <div class="color-wrap">
+          <span>字体颜色</span>
+          <input type="color" class="color-input" id="fontColorInput" value="#d63384">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">气泡位置</div>
+      <div class="slider-row">
+        <span class="slider-label">水平</span>
+        <input type="range" class="slider" id="posXSlider" min="0" max="100" value="50">
+        <span class="slider-value" id="posXValue">50%</span>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">垂直</span>
+        <input type="range" class="slider" id="posYSlider" min="0" max="100" value="85">
+        <span class="slider-value" id="posYValue">85%</span>
+      </div>
+      <div class="select-row">
+        <span class="slider-label">突起方向</span>
+        <select class="select-input" id="tailSideSelect">
+          <option value="left">左边</option>
+          <option value="right">右边</option>
+        </select>
+      </div>
+      <div class="slider-row">
+        <span class="slider-label">突起偏移</span>
+        <input type="range" class="slider" id="tailOffsetSlider" min="10" max="200" value="40">
+        <span class="slider-value" id="tailOffsetValue">40px</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">口癖设置</div>
+      <div class="quirk-row">
+        <input type="text" class="quirk-input" id="quirkInput" placeholder="口癖文字" value="喵~">
+        <div class="toggle-wrap">
+          <span class="toggle-label">开启</span>
+          <label class="toggle">
+            <input type="checkbox" id="quirkToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="history-header">
+        <div class="section-label" style="margin-bottom:0">消息历史</div>
+        <button class="history-clear-btn" id="historyClearBtn">清空</button>
+      </div>
+      <div class="history-section" id="historySection">
+        <div class="history-empty">暂无记录</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../shared/protocol.js"></script>
+<script src="../shared/ws-client.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
